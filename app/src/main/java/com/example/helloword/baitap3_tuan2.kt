@@ -49,48 +49,33 @@ class Baitap3Tuan2Activity : ComponentActivity() {
 }
 
 // Phân loại điểm bằng if/else theo yêu cầu bài tập.
-fun classify(score: Double): String {
-    if (score < 0 || score > 10) {
-        return "Không hợp lệ"
+fun classify(score: Double): String =
+    if (score !in 0.0..10.0) {
+        "Không hợp lệ"
     } else if (score >= 8.0) {
-        return "Giỏi"
+        "Giỏi"
     } else if (score >= 6.5) {
-        return "Khá"
+        "Khá"
     } else if (score >= 5.0) {
-        return "Trung bình"
+        "Trung bình"
     } else {
-        return "Yếu"
+        "Yếu"
     }
-}
 
-// Chọn màu chữ bằng if/else.
-private fun gradeColor(grade: String): Color {
+// Chọn màu chữ bằng if/else theo yêu cầu bài tập.
+@Suppress("CascadeIf")
+private fun gradeColor(grade: String): Color =
     if (grade == "Giỏi") {
-        return Color.Black
+        Color.Black
     } else if (grade == "Khá") {
-        return Color.Blue
+        Color.Blue
     } else if (grade == "Trung bình") {
-        return Color.DarkGray
+        Color.DarkGray
     } else if (grade == "Yếu") {
-        return Color.Red
+        Color.Red
     } else {
-        return Color.Gray
+        Color.Gray
     }
-}
-
-private fun gradeBackground(grade: String): Color {
-    if (grade == "Giỏi") {
-        return Color.LightGray
-    } else if (grade == "Khá") {
-        return Color.LightGray
-    } else if (grade == "Trung bình") {
-        return Color.LightGray
-    } else if (grade == "Yếu") {
-        return Color.LightGray
-    } else {
-        return Color.LightGray
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,7 +130,7 @@ fun GradeScreen() {
                     text = grade,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(gradeBackground(grade), RoundedCornerShape(10.dp))
+                        .background(Color.LightGray, RoundedCornerShape(10.dp))
                         .padding(vertical = 11.dp),
                     color = gradeColor(grade),
                     fontSize = 20.sp,
@@ -200,7 +185,7 @@ private fun ScoreRow(score: Double) {
         Text(
             text = grade,
             modifier = Modifier
-                .background(gradeBackground(grade), RoundedCornerShape(7.dp))
+                .background(Color.LightGray, RoundedCornerShape(7.dp))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
             color = gradeColor(grade),
             fontSize = 13.sp,
@@ -208,5 +193,7 @@ private fun ScoreRow(score: Double) {
         )
     }
 }
+
+
 
 
