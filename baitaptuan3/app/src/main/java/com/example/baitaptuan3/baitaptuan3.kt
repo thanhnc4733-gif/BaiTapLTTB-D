@@ -5,45 +5,72 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// ---------- Màu dùng chung ----------
-private val TitleBlue = Color.Blue
-private val ItemBlue = Color.Blue.copy(alpha = 0.2f)
-private val ItemRed = Color.Red.copy(alpha = 0.3f)
-private val BoxLight = Color.Blue.copy(alpha = 0.4f)
-private val BoxDark = Color.Blue.copy(alpha = 0.8f)
-private val PanelGray = Color.LightGray.copy(alpha = 0.3f)
+// ---------- Màu sắc (sửa ở đây là đổi cho cả app) ----------
+private val BarBlue = Color(0xFF2196F3)
+private val GreenButton = Color(0xFF5CB85C)
+private val OrangeButton = Color(0xFFFFA000)
+private val CardBlue = Color(0xFFE8F1FB)
+private val ScreenBackground = Color(0xFFFDF8FF)
 
-// ---------- Danh sách các màn hình của app ----------
-enum class UiScreen {
-    WELCOME, LIST, TEXT, IMAGES, TEXTFIELD, PASSWORD, COLUMN, ROW,
+// ---------- Dữ liệu: một phần tử trong danh sách ----------
+data class ListItem(val id: Int, val text: String)
+
+private val quotes = listOf(
+    "The only way to do great work is to love what you do.",
+    "Stay hungry, stay foolish.",
+    "Simplicity is the ultimate sophistication.",
+    "Talk is cheap. Show me the code.",
+    "First, solve the problem. Then, write the code."
+)
+
+// Tạo 1.000.000 phần tử ngẫu nhiên.
+// "by lazy": chỉ tạo khi dùng lần đầu, sau đó giữ lại để dùng tiếp.
+val bigList: List<ListItem> by lazy {
+    List(1_000_000) { index -> ListItem(index + 1, quotes.random()) }
+}
+
+// ---------- Tên các màn hình ----------
+object Routes {
+    const val CHOOSE = "choose"
+    const val COLUMN = "column"
+    const val LAZY = "lazy"
 }
 
 class MainActivity : ComponentActivity() {
@@ -52,388 +79,172 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                UiComponentsApp()
+                AppNavigation()
             }
         }
     }
 }
 
-// ---------- "Bộ điều hướng": nhớ màn hình hiện tại và hiển thị đúng màn hình ----------
+// ---------- Điều hướng giữa các màn hình ----------
 @Composable
-fun UiComponentsApp() {
-    var current by remember { mutableStateOf(UiScreen.WELCOME) }
+fun AppNavigation() {
+    // Biến nhớ màn hình hiện tại. Giá trị đổi thì giao diện tự đổi theo.
+    var current by remember { mutableStateOf(Routes.CHOOSE) }
 
-    // Nút Back của điện thoại: về danh sách, từ danh sách về màn hình chào
-    BackHandler(enabled = current != UiScreen.WELCOME) {
-        current = if (current == UiScreen.LIST) UiScreen.WELCOME else UiScreen.LIST
+    // Nút Back của điện thoại: quay về màn hình chọn
+    BackHandler(enabled = current != Routes.CHOOSE) {
+        current = Routes.CHOOSE
     }
-
-    val backToList = { current = UiScreen.LIST }
 
     when (current) {
-        UiScreen.WELCOME -> WelcomeScreen(onReady = { current = UiScreen.LIST })
-        UiScreen.LIST -> ComponentListScreen(onOpen = { current = it })
-        UiScreen.TEXT -> DetailScaffold("Text Detail", backToList) { TextDetailContent() }
-        UiScreen.IMAGES -> DetailScaffold("Images", backToList) { ImagesDetailContent() }
-        UiScreen.TEXTFIELD -> DetailScaffold("TextField", backToList) { TextFieldDetailContent() }
-        UiScreen.PASSWORD -> DetailScaffold("PasswordField", backToList) { PasswordDetailContent() }
-        UiScreen.COLUMN -> DetailScaffold("Column Layout", backToList) { ColumnDetailContent() }
-        UiScreen.ROW -> DetailScaffold("Row Layout", backToList) { RowLayoutDetailContent() }
-    }
-}
-
-// ---------- Màn hình 1: Chào mừng ----------
-@Composable
-fun WelcomeScreen(onReady: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .safeDrawingPadding()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.weight(1f))
-
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(28.dp))
-                .background(Color.Blue),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Jc", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Jetpack Compose", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Jetpack Compose is a modern UI toolkit for building native Android " +
-                    "applications using a declarative programming approach.",
-            fontSize = 12.sp,
-            textAlign = TextAlign.Center,
-            color = Color.Gray
+        Routes.CHOOSE -> ChooseListTypeScreen(
+            onColumnClick = { current = Routes.COLUMN },
+            onLazyClick = { current = Routes.LAZY }
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Routes.COLUMN -> ColumnListScreen(onBack = { current = Routes.CHOOSE })
 
-        Button(
-            onClick = onReady,
+        Routes.LAZY -> LazyColumnListScreen(onBack = { current = Routes.CHOOSE })
+    }
+}
+
+// ---------- Thanh tiêu đề màu xanh dùng chung ----------
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppTopBar(title: String, onBack: (() -> Unit)? = null) {
+    TopAppBar(
+        title = { Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+        navigationIcon = {
+            if (onBack != null) {
+                Text(
+                    text = "‹",
+                    fontSize = 32.sp,
+                    color = Color.White,
+                    modifier = Modifier
+                        .clickable { onBack() }
+                        .padding(horizontal = 16.dp)
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = BarBlue,
+            titleContentColor = Color.White
+        )
+    )
+}
+
+// ---------- Màn hình 1: chọn kiểu danh sách ----------
+@Composable
+fun ChooseListTypeScreen(onColumnClick: () -> Unit, onLazyClick: () -> Unit) {
+    Scaffold(
+        containerColor = ScreenBackground,
+        topBar = { AppTopBar("Choose List Type") }
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 32.dp),
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("I'm ready")
+            Button(
+                onClick = onColumnClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GreenButton)
+            ) {
+                Text("Column (1,000,000 items)", fontSize = 12.sp)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onLazyClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = OrangeButton)
+            ) {
+                Text("LazyColumn (1,000,000 items)", fontSize = 12.sp)
+            }
         }
     }
 }
 
-// ---------- Màn hình 2: Danh sách thành phần ----------
+// ---------- Màn hình 2: dùng Column thường ----------
+// CẢNH BÁO: Column tạo cả 1.000.000 thẻ cùng lúc nên app sẽ đứng hình hoặc bị tắt.
+// Muốn thử an toàn, đổi "bigList" thành "bigList.take(10_000)".
 @Composable
-fun ComponentListScreen(onOpen: (UiScreen) -> Unit) {
-    Scaffold(containerColor = Color.White) { innerPadding ->
+fun ColumnListScreen(onBack: () -> Unit) {
+    Scaffold(
+        containerColor = ScreenBackground,
+        topBar = { AppTopBar("Column", onBack) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "UI Components List",
-                color = TitleBlue,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SectionTitle("Display")
-            ListItemCard("Text", "Displays text") { onOpen(UiScreen.TEXT) }
-            ListItemCard("Image", "Displays an image") { onOpen(UiScreen.IMAGES) }
-
-            SectionTitle("Input")
-            ListItemCard("TextField", "Input field for text") { onOpen(UiScreen.TEXTFIELD) }
-            ListItemCard("PasswordField", "Input field for passwords") { onOpen(UiScreen.PASSWORD) }
-
-            SectionTitle("Layout")
-            ListItemCard("Column", "Arranges elements vertically") { onOpen(UiScreen.COLUMN) }
-            ListItemCard("Row", "Arranges elements horizontally") { onOpen(UiScreen.ROW) }
-
-             }
+            for (item in bigList) {
+                ListItemCard(item)
             }
         }
-
-
-
-@Composable
-fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(top = 8.dp, bottom = 6.dp)
-    )
-}
-
-@Composable
-fun ListItemCard(
-    title: String,
-    subtitle: String,
-    color: Color = ItemBlue,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(color)
-            .clickable { onClick() }
-            .padding(14.dp)
-    ) {
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        Text(subtitle, fontSize = 13.sp)
     }
 }
 
-// ---------- Khung chung cho các màn hình chi tiết: thanh tiêu đề + nút quay lại ----------
+// ---------- Màn hình 3: dùng LazyColumn ----------
+// Chỉ vẽ những thẻ đang hiện trên màn hình nên cuộn mượt dù có 1.000.000 mục.
 @Composable
-fun DetailScaffold(
-    title: String,
-    onBack: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Scaffold(containerColor = Color.White) { innerPadding ->
-        Column(
+fun LazyColumnListScreen(onBack: () -> Unit) {
+    Scaffold(
+        containerColor = ScreenBackground,
+        topBar = { AppTopBar("LazyColumn", onBack) }
+    ) { innerPadding ->
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 8.dp)
-            ) {
-                Text(
-                    text = "‹",
-                    fontSize = 32.sp,
-                    color = TitleBlue,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .clickable { onBack() }
-                        .padding(horizontal = 12.dp)
-                )
-                Text(
-                    text = title,
-                    fontSize = 18.sp,
-                    color = TitleBlue,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-            content()
-        }
-    }
-}
-
-// ---------- Chi tiết: Text (nhiều kiểu chữ trong cùng một câu) ----------
-@Composable
-fun TextDetailContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = buildAnnotatedString {
-                append("The ")
-                withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) { append("quick") }
-                append(" ")
-                withStyle(SpanStyle(fontSize = 34.sp, color = Color.Red)) { append("Brown") }
-                append("\nfox ")
-                withStyle(SpanStyle(letterSpacing = 6.sp)) { append("jumps") }
-                append(" ")
-                withStyle(
-                    SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic)
-                ) { append("over") }
-                append("\n")
-                withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append("the") }
-                append(" ")
-                withStyle(
-                    SpanStyle(
-                        fontFamily = FontFamily.Cursive,
-                        fontStyle = FontStyle.Italic,
-                        fontSize = 18.sp
-                    )
-                ) { append("lazy") }
-                append(" dog.")
-            },
-            fontSize = 26.sp,
-            lineHeight = 44.sp
-        )
-    }
-}
-
-// ---------- Chi tiết: Image ----------
-// Ảnh đang dùng tạm ic_launcher_foreground có sẵn trong project.
-// Muốn dùng ảnh của bạn: kéo ảnh vào res/drawable rồi đổi tên R.drawable.xxx bên dưới.
-@Composable
-fun ImagesDetailContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.uth),
-            contentDescription = "Ảnh 1",
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Blue.copy(alpha = 0.1f))
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "https://giaothongvantaitphcm.edu.vn/wp-content/uploads/2025/01/Logo-GTVT.png",
-            fontSize = 11.sp,
-            textDecoration = TextDecoration.Underline,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Image(
-            painter = painterResource(id = R.drawable.uth),
-            contentDescription = "Ảnh 2",
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Blue.copy(alpha = 0.1f))
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("In app", fontSize = 12.sp, color = Color.Gray)
-    }
-}
-
-// ---------- Chi tiết: TextField (gõ chữ, dòng đỏ tự cập nhật) ----------
-@Composable
-fun TextFieldDetailContent() {
-    var text by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            placeholder = { Text("Thông tin nhập", fontSize = 13.sp) },
-            singleLine = true,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = if (text.isEmpty()) "Tự động cập nhật dữ liệu theo textfield" else text,
-            color = Color.Red,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
-}
-
-// ---------- Chi tiết: PasswordField ----------
-@Composable
-fun PasswordDetailContent() {
-    var password by remember { mutableStateOf("") }
-    var show by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            placeholder = { Text("Mật khẩu", fontSize = 13.sp) },
-            singleLine = true,
-            shape = RoundedCornerShape(24.dp),
-            visualTransformation = if (show) VisualTransformation.None
-            else PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = show, onCheckedChange = { show = it })
-            Text("Hiện mật khẩu", fontSize = 13.sp)
-        }
-    }
-}
-
-// ---------- Chi tiết: Column (xếp dọc) ----------
-@Composable
-fun ColumnDetailContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .background(PanelGray, RoundedCornerShape(10.dp))
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        for (i in 1..4) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .background(if (i == 2) BoxDark else BoxLight, RoundedCornerShape(8.dp))
-            )
-        }
-    }
-}
-
-// ---------- Chi tiết: Row (xếp ngang) - 4 hàng, mỗi hàng 3 ô ----------
-@Composable
-fun RowLayoutDetailContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        for (i in 1..4) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(PanelGray, RoundedCornerShape(10.dp))
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (j in 1..3) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
-                            .background(if (j == 2) BoxDark else BoxLight, RoundedCornerShape(8.dp))
-                    )
-                }
+            items(bigList) { item ->
+                ListItemCard(item)
             }
         }
     }
 }
 
+// ---------- Một thẻ trong danh sách ----------
+@Composable
+fun ListItemCard(item: ListItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBlue),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${item.id}",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = item.text,
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
+            }
+            Text(text = "→", fontSize = 20.sp)
+        }
+    }
+}
