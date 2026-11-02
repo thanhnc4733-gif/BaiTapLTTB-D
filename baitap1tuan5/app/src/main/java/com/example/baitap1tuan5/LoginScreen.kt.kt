@@ -27,7 +27,6 @@ fun LoginScreen(vm: AuthViewModel, onSuccess: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Hiện thông báo (lỗi / thành công); nếu đã có user thì vào trang chủ
     LaunchedEffect(vm.message) {
         vm.message?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
