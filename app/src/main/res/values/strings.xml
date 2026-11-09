@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">baitap1tuan5</string>
+    <!-- Default Web Client ID for Google Sign-In. Replace with your actual OAuth 2.0 Web Client ID from Firebase/Google Cloud Console -->
+    <string name="default_web_client_id">YOUR_DEFAULT_WEB_CLIENT_ID</string>
+</resources>
