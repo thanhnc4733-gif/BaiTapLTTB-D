@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "974646573697",
+    "firebase_url": "https://uthtodo-e2b7f-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "uthtodo-e2b7f",
+    "storage_bucket": "uthtodo-e2b7f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:974646573697:android:c88b839ba806c211686b80",
+        "android_client_info": {
+          "package_name": "com.example.baitap1tuan5"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "974646573697-19lh7v8uss3vb7rdcn40eibnbigv8luv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.baitap1tuan5",
+            "certificate_hash": "bebcb04d713ab6589bf93d649be1bc06be7779b3"
+          }
+        },
+        {
+          "client_id": "974646573697-psjjm89ajjuqj6p0if8dtq4sdqjamput.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3Kq33ZHqotF_WJ2MwzG2ko-5YfcXBepc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "974646573697-psjjm89ajjuqj6p0if8dtq4sdqjamput.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
